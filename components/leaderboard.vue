@@ -1,14 +1,33 @@
 <script setup lang="ts">
+// const columns = [{
+//   key: 'id',
+//   label: 'ID'
+// }, {
+//   key: 'solAddress',
+//   label: 'Sol Address',
+//   sortable: true
+// }, {
+//   key: 'rank',
+//   label: 'Rank',
+//   sortable: true
+// }]
+
+
 const columns = [{
-  key: 'id',
-  label: 'ID'
-}, {
-  key: 'solAddress',
-  label: 'Sol Address',
+  key: 'position',
+  label: 'Position',
   sortable: true
 }, {
-  key: 'rank',
-  label: 'Rank',
+  key: 'name',
+  label: 'Username',
+  sortable: true
+}, {
+  key: 'completed_quests',
+  label: 'Completed quests',
+  sortable: true
+}, {
+  key: 'xp',
+  label: 'Experience',
   sortable: true
 }]
 
@@ -85,10 +104,10 @@ const uiSettings = {
   },
 }
 
-
+const members = ref([]);
 const paginationUi = {
   wrapper: 'flex items-center -space-x-px',
-  base: '',
+  base: 'bg-teal-500 hover:bg-teal-600',
   rounded: 'first:rounded-s-md last:rounded-e-md',
   default: {
     size: 'md',
@@ -120,20 +139,93 @@ const paginationUi = {
     },
   },
 }
+
+onMounted(async () => {
+  // const data1 = await fetch('https://api-v1.zealy.io/communities/samowif/leaderboard?page=0&limit=1000', {
+  //   method: 'GET',
+  //   headers: {
+  //     "x-api-key": '8a9b989E9gcdZ-KhLWT7eY8usUQ'
+  //   }
+  // })
+  // const data2 = await fetch('https://api-v1.zealy.io/communities/samowif/quests', {
+  //   method: 'GET',
+  //   headers: {
+  //     "x-api-key": 'e34e53oDMvi8ORD3aTWKAz3ycMM',
+  //     "Access-Control-Allow-Origin": 'api-v1.zealy.io',
+  //     "Access-Control-Allow-Credentials": 'true',
+  //   },
+  //   cache: "no-cache",
+  //   mode: "no-cors"
+  // })
+
+  try {
+    const response = await fetch('/api/quests/leaderboard', {
+      method: 'POST',
+      headers: {
+        "Content-Type": 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        limit: pageCount,
+        page: page.value - 1
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const {leaderboard} = await response.json();
+    // return leaderboard;
+
+    members.value = leaderboard.sort((a, b) => a.xp > b.xp).map((m, i) => {
+      m.position = i + 1;
+
+      return m;
+    });
+
+    // members.value = [...members.value, ...members.value]
+    // members.value = [...members.value, ...members.value]
+    // members.value = [...members.value, ...members.value]
+    // members.value = [...members.value, ...members.value]
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+
+
+  // console.log(data1)
+  // console.log(await data2)
+})
+
 </script>
 
 <template>
-  <UTable :ui="uiSettings" :columns="columns" :rows="paginatedPeople" class="">
-    <template #solAddress-data="{ row }">
-      <USkeleton class="h-4 w-[250px]" />
+  <UTable :ui="uiSettings" :columns="columns" :rows="members" class="">
+    <template #name-data="{ row }">
+      <div class="flex items-center space-x-4">
+        <div>
+          <img v-if="row.avatar" :src="row.avatar" class="w-8 h-8 rounded-full">
+          <USkeleton v-else class="w-8 h-8 rounded-full" />
+        </div>
+        <div>
+          <div>
+            {{row.name}}
+          </div>
+          <div>
+            {{`${row.address.slice(0, 6)}...${row.address.slice(-6)}`}}
+          </div>
+        </div>
+      </div>
     </template>
     <template #rank-data="{ row }">
-      <USkeleton class="h-4 w-[250px]" />
+      {{row.xp}}
+    </template>
+    <template #completed_quests-data="{ row }">
+      {{row.numberOfQuests}}
     </template>
   </UTable>
 
-<!--  <div class="flex justify-end px-3 py-3.5 border-t border-gray-200 dark:border-gray-700">-->
-<!--    <UPagination class="" :ui="paginationUi" v-model="page" :page-count="pageCount" :total="people.length" />-->
-<!--  </div>-->
+  <div class="flex justify-end px-3 py-3.5 border-t border-gray-200 dark:border-gray-700">
+    <UPagination class="" :ui="paginationUi" v-model="page" :page-count="pageCount" :total="members.length" />
+  </div>
 </template>
 

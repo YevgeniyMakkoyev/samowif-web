@@ -331,6 +331,22 @@ const executeExactQuoteIn = async () => {
   exchangeOptions.value.outputAmount = Number(quoteResponse?.outAmount / 1000000);
   exchangeOptions.value.quoteResponse = quoteResponse;
 }
+
+
+onMounted(async () => {
+  const fe = await fetch('https://samowif.com/api/quests/checkDailyEligibilityForMinimumShare', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "accounts": {
+        "wallet": "7MY82cpyg4r5QsyeGieotiR6K1wcCfkjUT59ykFoPujH1"
+      }
+    })
+  })
+})
 </script>
 
 <style>
